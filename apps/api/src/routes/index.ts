@@ -4,6 +4,8 @@ import userRoutes from './user.routes.js';
 import jobRoutes from './job.routes.js';
 import companyRoutes from './company.routes.js';
 import uploadRoutes from './upload.routes.js';
+import applicationRoutes from './application.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -25,8 +27,11 @@ router.use('/jobs', jobRoutes);
 router.use('/companies', companyRoutes);
 router.use('/uploads', uploadRoutes);
 
+// Phase 3: Applications + Notifications
+router.use('/applications', applicationRoutes);
+router.use('/notifications', notificationRoutes);
+
 // Future phases:
-// router.use('/applications', applicationRoutes);
 // router.use('/resumes', resumeRoutes);
 // router.use('/assessments', assessmentRoutes);
 // router.use('/admin', adminRoutes);
