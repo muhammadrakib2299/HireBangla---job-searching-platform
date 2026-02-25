@@ -5,6 +5,7 @@ import { logger } from './utils/logger.js';
 import { initializeScheduledJobs } from './jobs/queues.js';
 import { startScraperWorker, stopScraperWorker } from './jobs/scraper.job.js';
 import { startCleanupWorker, stopCleanupWorker } from './jobs/cleanup.job.js';
+import { startEmailWorker, stopEmailWorker } from './jobs/email.job.js';
 
 async function start() {
   await connectDB();
@@ -13,6 +14,7 @@ async function start() {
   try {
     startScraperWorker();
     startCleanupWorker();
+    startEmailWorker();
     await initializeScheduledJobs();
     logger.info('BullMQ workers and scheduled jobs initialized');
   } catch (error) {
@@ -29,6 +31,7 @@ async function start() {
     server.close(async () => {
       await stopScraperWorker();
       await stopCleanupWorker();
+      await stopEmailWorker();
       logger.info('Workers stopped. Server closed.');
       process.exit(0);
     });

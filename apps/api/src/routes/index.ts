@@ -8,6 +8,7 @@ import applicationRoutes from './application.routes.js';
 import notificationRoutes from './notification.routes.js';
 import scraperRoutes from './scraper.routes.js';
 import assessmentRoutes from './assessment.routes.js';
+import adminRoutes from './admin.routes.js';
 
 const router = Router();
 
@@ -38,5 +39,8 @@ router.use('/scrapers', scraperRoutes);
 
 // Phase 5: Assessments + Matching
 router.use('/assessments', assessmentRoutes);
+
+// Phase 6: Admin
+router.use('/admin', adminRoutes);
 
 export default router;
