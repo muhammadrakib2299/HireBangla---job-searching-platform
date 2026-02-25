@@ -22,6 +22,7 @@ export function Header() {
   const navLinks = [
     { href: '/jobs', label: 'Find Jobs' },
     { href: '/companies', label: 'Companies' },
+    { href: '/assessments', label: 'Assessments' },
   ];
 
   const getDashboardLink = () => {
