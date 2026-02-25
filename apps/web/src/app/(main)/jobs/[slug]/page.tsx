@@ -1,9 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useJobBySlug, useSimilarJobs } from '@/hooks/useJobs';
 import { useAuth } from '@/providers/AuthProvider';
+import {
+  useApplyToJob,
+  useIsJobSaved,
+  useSaveJob,
+  useUnsaveJob,
+} from '@/hooks/useApplications';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -21,6 +28,8 @@ import {
   ArrowLeft,
   Share2,
   Bookmark,
+  BookmarkCheck,
+  X,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -38,7 +47,17 @@ export default function JobDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: job, isLoading, error } = useJobBySlug(slug);
   const { data: similarJobs } = useSimilarJobs(slug);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const applyMutation = useApplyToJob();
+  const saveMutation = useSaveJob();
+  const unsaveMutation = useUnsaveJob();
+  const { data: savedData } = useIsJobSaved(
+    isAuthenticated ? job?._id : '',
+  );
+  const isSaved = savedData?.isSaved;
 
   if (isLoading) return <PageSpinner />;
 
@@ -99,12 +118,28 @@ export default function JobDetailPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50"
-                    onClick={() => toast.info('Save feature coming soon')}
-                  >
-                    <Bookmark className="h-5 w-5" />
-                  </button>
+                  {isAuthenticated && (
+                    <button
+                      className={`rounded-lg border p-2 transition-colors ${
+                        isSaved
+                          ? 'border-blue-300 bg-blue-50 text-blue-600'
+                          : 'border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                      onClick={() => {
+                        if (isSaved) {
+                          unsaveMutation.mutate(job._id);
+                        } else {
+                          saveMutation.mutate(job._id);
+                        }
+                      }}
+                    >
+                      {isSaved ? (
+                        <BookmarkCheck className="h-5 w-5" />
+                      ) : (
+                        <Bookmark className="h-5 w-5" />
+                      )}
+                    </button>
+                  )}
                   <button
                     className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50"
                     onClick={() => {
@@ -276,22 +311,88 @@ export default function JobDetailPage() {
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                   </a>
-                ) : isAuthenticated ? (
+                ) : isAuthenticated && user?.role === 'jobseeker' ? (
                   <Button
                     size="lg"
-                    onClick={() =>
-                      toast.info('Application feature coming in Phase 3')
-                    }
+                    onClick={() => setShowApplyModal(true)}
                   >
                     <Briefcase className="h-5 w-5" />
                     Apply Now
                   </Button>
+                ) : isAuthenticated ? (
+                  <p className="text-sm text-gray-500">
+                    Switch to a jobseeker account to apply.
+                  </p>
                 ) : (
                   <Link href="/login">
                     <Button size="lg">Login to Apply</Button>
                   </Link>
                 )}
               </div>
+
+              {/* Apply Modal */}
+              {showApplyModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                  <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Apply to {job.title}
+                      </h2>
+                      <button
+                        onClick={() => setShowApplyModal(false)}
+                        className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      at {job.companyName}
+                    </p>
+
+                    <div className="mt-4">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Cover Letter (optional)
+                      </label>
+                      <textarea
+                        value={coverLetter}
+                        onChange={(e) => setCoverLetter(e.target.value)}
+                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:outline-none"
+                        rows={6}
+                        placeholder="Why are you a good fit for this role?"
+                        maxLength={5000}
+                      />
+                      <p className="mt-1 text-xs text-gray-400">
+                        {coverLetter.length}/5000
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowApplyModal(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          applyMutation.mutate(
+                            {
+                              jobId: job._id,
+                              coverLetter: coverLetter || undefined,
+                            },
+                            {
+                              onSuccess: () => setShowApplyModal(false),
+                            },
+                          );
+                        }}
+                        isLoading={applyMutation.isPending}
+                      >
+                        Submit Application
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
