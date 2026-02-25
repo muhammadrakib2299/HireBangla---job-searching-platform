@@ -11,6 +11,7 @@ import {
   useSaveJob,
   useUnsaveJob,
 } from '@/hooks/useApplications';
+import { useJobMatchScore } from '@/hooks/useAssessments';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -58,6 +59,9 @@ export default function JobDetailPage() {
     isAuthenticated ? job?._id : '',
   );
   const isSaved = savedData?.isSaved;
+  const { data: matchData } = useJobMatchScore(
+    isAuthenticated && user?.role === 'jobseeker' && job?._id ? job._id : '',
+  );
 
   if (isLoading) return <PageSpinner />;
 
@@ -170,6 +174,27 @@ export default function JobDetailPage() {
                   </Badge>
                 )}
               </div>
+
+              {/* Match Score */}
+              {matchData?.score !== undefined && (
+                <div className="mt-4 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                  <div className={`text-2xl font-bold ${
+                    matchData.score >= 70
+                      ? 'text-green-600'
+                      : matchData.score >= 40
+                        ? 'text-yellow-600'
+                        : 'text-gray-500'
+                  }`}>
+                    {matchData.score}%
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Match Score</p>
+                    <p className="text-xs text-blue-700">
+                      Based on your skills, experience, and preferences
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Quick Info Grid */}
               <div className="mt-6 grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-4">

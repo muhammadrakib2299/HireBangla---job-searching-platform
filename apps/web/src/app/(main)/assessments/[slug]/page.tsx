@@ -491,7 +491,7 @@ export default function AssessmentDetailPage({
               Browse Assessments
             </Button>
           </Link>
-          <Link href="/jobseeker/assessments" className="flex-1">
+          <Link href="/dashboard/jobseeker/assessments" className="flex-1">
             <Button className="w-full">
               View My Skills
             </Button>
