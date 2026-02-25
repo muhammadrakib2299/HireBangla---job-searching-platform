@@ -1,4 +1,4 @@
-import { ApplicationStatus } from './enums.js';
+import { ApplicationStatus } from './enums';
 
 export interface StatusHistoryEntry {
   status: ApplicationStatus;

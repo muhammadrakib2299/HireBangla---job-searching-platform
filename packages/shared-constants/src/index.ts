@@ -1,3 +1,3 @@
-export * from './locations.js';
-export * from './categories.js';
-export * from './industries.js';
+export * from './locations';
+export * from './categories';
+export * from './industries';

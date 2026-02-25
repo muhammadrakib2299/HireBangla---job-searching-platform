@@ -5,7 +5,7 @@ import {
   ExperienceLevel,
   ApplicationMethod,
   SalaryPeriod,
-} from './enums.js';
+} from './enums';
 
 export interface JobLocation {
   district?: string;

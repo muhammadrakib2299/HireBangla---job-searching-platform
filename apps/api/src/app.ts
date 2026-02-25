@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { corsOptions } from './config/cors.js';
+import { requestLogger } from './middleware/requestLogger.middleware.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 
@@ -12,6 +13,9 @@ app.use(helmet());
 
 // CORS
 app.use(cors(corsOptions));
+
+// Request logging
+app.use(requestLogger);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

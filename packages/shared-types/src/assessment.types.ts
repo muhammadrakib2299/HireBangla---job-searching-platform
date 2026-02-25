@@ -1,4 +1,4 @@
-import { AssessmentDifficulty, QuestionType } from './enums.js';
+import { AssessmentDifficulty, QuestionType } from './enums';
 
 export interface AssessmentOption {
   text: string;

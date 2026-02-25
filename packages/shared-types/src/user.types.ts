@@ -1,4 +1,4 @@
-import { UserRole, Gender, JobType, SkillProficiency } from './enums.js';
+import { UserRole, Gender, JobType, SkillProficiency } from './enums';
 
 export interface UserProfile {
   firstName?: string;

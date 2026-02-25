@@ -1,4 +1,4 @@
-import { CompanySize } from './enums.js';
+import { CompanySize } from './enums';
 
 export interface ICompany {
   _id: string;

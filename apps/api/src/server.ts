@@ -10,20 +10,22 @@ import { startEmailWorker, stopEmailWorker } from './jobs/email.job.js';
 async function start() {
   await connectDB();
 
-  // Start BullMQ workers
+  // Start HTTP server first so API is available immediately
+  const server = app.listen(env.PORT, () => {
+    logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  });
+
+  // Start BullMQ workers in background (non-blocking)
   try {
     startScraperWorker();
     startCleanupWorker();
     startEmailWorker();
-    await initializeScheduledJobs();
-    logger.info('BullMQ workers and scheduled jobs initialized');
+    initializeScheduledJobs()
+      .then(() => logger.info('BullMQ scheduled jobs initialized'))
+      .catch((err) => logger.warn({ err }, 'BullMQ scheduled jobs failed (Redis may not be running)'));
   } catch (error) {
     logger.warn({ err: error }, 'BullMQ initialization failed (Redis may not be running). Scrapers will be unavailable.');
   }
-
-  const server = app.listen(env.PORT, () => {
-    logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
-  });
 
   // Graceful shutdown
   const shutdown = async (signal: string) => {

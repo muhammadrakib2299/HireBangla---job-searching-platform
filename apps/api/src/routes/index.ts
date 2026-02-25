@@ -10,6 +10,7 @@ import notificationRoutes from './notification.routes.js';
 import scraperRoutes from './scraper.routes.js';
 import assessmentRoutes from './assessment.routes.js';
 import adminRoutes from './admin.routes.js';
+import resumeRoutes from './resume.routes.js';
 
 const router = Router();
 
@@ -46,5 +47,8 @@ router.use('/assessments', assessmentRoutes);
 
 // Phase 6: Admin
 router.use('/admin', adminRoutes);
+
+// Phase 8: Resumes
+router.use('/resumes', resumeRoutes);
 
 export default router;
