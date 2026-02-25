@@ -100,7 +100,7 @@ export async function verifyEmail(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { token } = req.params;
+    const token = req.params.token as string;
     const result = await authService.verifyEmail(token);
     res.json({
       success: true,
@@ -133,7 +133,7 @@ export async function resetPassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { token } = req.params;
+    const token = req.params.token as string;
     const { password } = req.body;
     const result = await authService.resetPassword(token, password);
     res.json({

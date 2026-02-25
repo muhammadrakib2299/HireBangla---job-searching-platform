@@ -116,7 +116,7 @@ const companySchema = new Schema<ICompanyDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: Record<string, unknown>) {
         delete ret.__v;
         return ret;
       },

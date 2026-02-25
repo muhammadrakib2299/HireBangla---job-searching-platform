@@ -186,7 +186,7 @@ const userSchema = new Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: Record<string, unknown>) {
         delete ret.password;
         delete ret.refreshTokens;
         delete ret.emailVerificationToken;
