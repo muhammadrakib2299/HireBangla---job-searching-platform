@@ -162,6 +162,26 @@ export function JobFilters({ filters, onChange, className }: JobFiltersProps) {
         </div>
       </div>
 
+      {/* Source Filter */}
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-gray-900">Source</h3>
+        <select
+          value={filters.source || ''}
+          onChange={(e) => update({ source: e.target.value || undefined })}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        >
+          <option value="">All Sources</option>
+          <option value="original">Direct Post</option>
+          <option value="bdjobs">BDJobs</option>
+          <option value="careerjet">CareerJet</option>
+          <option value="shomvob">Shomvob</option>
+          <option value="unjobs">UNJobs</option>
+          <option value="impactpool">Impactpool</option>
+          <option value="nextjobz">NextJobz</option>
+          <option value="skilljobs">SkillJobs</option>
+        </select>
+      </div>
+
       {/* Remote Toggle */}
       <div>
         <label className="flex cursor-pointer items-center gap-2 text-sm">

@@ -6,6 +6,7 @@ import companyRoutes from './company.routes.js';
 import uploadRoutes from './upload.routes.js';
 import applicationRoutes from './application.routes.js';
 import notificationRoutes from './notification.routes.js';
+import scraperRoutes from './scraper.routes.js';
 
 const router = Router();
 
@@ -31,10 +32,12 @@ router.use('/uploads', uploadRoutes);
 router.use('/applications', applicationRoutes);
 router.use('/notifications', notificationRoutes);
 
+// Phase 4: Scrapers (admin only)
+router.use('/scrapers', scraperRoutes);
+
 // Future phases:
 // router.use('/resumes', resumeRoutes);
 // router.use('/assessments', assessmentRoutes);
 // router.use('/admin', adminRoutes);
-// router.use('/scrapers', scraperRoutes);
 
 export default router;
