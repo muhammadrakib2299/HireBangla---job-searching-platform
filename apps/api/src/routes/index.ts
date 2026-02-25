@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
 
 const router = Router();
 
@@ -11,9 +13,11 @@ router.get('/health', (_req, res) => {
   });
 });
 
-// Routes will be added here as we build each phase:
-// router.use('/auth', authRoutes);
-// router.use('/users', userRoutes);
+// Phase 1: Auth + Users
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+
+// Future phases:
 // router.use('/jobs', jobRoutes);
 // router.use('/companies', companyRoutes);
 // router.use('/applications', applicationRoutes);
