@@ -1,443 +1,63 @@
-'use client';
+import type { Metadata } from 'next';
+import JobDetailContent from './JobDetailContent';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useJobBySlug, useSimilarJobs } from '@/hooks/useJobs';
-import { useAuth } from '@/providers/AuthProvider';
-import {
-  useApplyToJob,
-  useIsJobSaved,
-  useSaveJob,
-  useUnsaveJob,
-} from '@/hooks/useApplications';
-import { useJobMatchScore } from '@/hooks/useAssessments';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Card, CardContent } from '@/components/ui/Card';
-import { JobCard } from '@/components/jobs/JobCard';
-import { PageSpinner } from '@/components/ui/Spinner';
-import {
-  MapPin,
-  Banknote,
-  Clock,
-  Calendar,
-  Building2,
-  Briefcase,
-  GraduationCap,
-  ExternalLink,
-  ArrowLeft,
-  Share2,
-  Bookmark,
-  BookmarkCheck,
-  X,
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hirebangla.com';
 
-const jobTypeLabels: Record<string, string> = {
-  'full-time': 'Full Time',
-  'part-time': 'Part Time',
-  contract: 'Contract',
-  internship: 'Internship',
-  freelance: 'Freelance',
-  remote: 'Remote',
-};
+async function getJob(slug: string) {
+  try {
+    const res = await fetch(`${API_URL}/jobs/slug/${slug}`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data;
+  } catch {
+    return null;
+  }
+}
 
-export default function JobDetailPage() {
-  const { slug } = useParams<{ slug: string }>();
-  const { data: job, isLoading, error } = useJobBySlug(slug);
-  const { data: similarJobs } = useSimilarJobs(slug);
-  const { isAuthenticated, user } = useAuth();
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const job = await getJob(slug);
 
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
-  const applyMutation = useApplyToJob();
-  const saveMutation = useSaveJob();
-  const unsaveMutation = useUnsaveJob();
-  const { data: savedData } = useIsJobSaved(
-    isAuthenticated ? job?._id : '',
-  );
-  const isSaved = savedData?.isSaved;
-  const { data: matchData } = useJobMatchScore(
-    isAuthenticated && user?.role === 'jobseeker' && job?._id ? job._id : '',
-  );
-
-  if (isLoading) return <PageSpinner />;
-
-  if (error || !job) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center">
-        <h2 className="text-xl font-bold text-gray-900">Job not found</h2>
-        <Link href="/jobs" className="mt-4">
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Jobs
-          </Button>
-        </Link>
-      </div>
-    );
+  if (!job) {
+    return { title: 'Job Not Found' };
   }
 
-  const locationText = [job.location?.district, job.location?.division]
+  const location = [job.location?.district, job.location?.division]
     .filter(Boolean)
     .join(', ');
 
-  const formatSalary = () => {
-    if (!job.salary) return null;
-    if (job.salary.isNegotiable) return 'Negotiable';
-    if (!job.salary.min && !job.salary.max) return null;
-    const c = job.salary.currency || 'BDT';
-    if (job.salary.min && job.salary.max) {
-      return `${c} ${job.salary.min.toLocaleString()} - ${job.salary.max.toLocaleString()}`;
-    }
-    if (job.salary.min) return `${c} ${job.salary.min.toLocaleString()}+`;
-    return `Up to ${c} ${job.salary.max.toLocaleString()}`;
+  const description = [
+    job.companyName && `at ${job.companyName}`,
+    location && `in ${location}`,
+    job.jobType && `(${job.jobType})`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return {
+    title: job.title,
+    description: `${job.title} ${description}. Apply now on HireBangla.`,
+    openGraph: {
+      title: `${job.title} - ${job.companyName || 'HireBangla'}`,
+      description: `${job.title} ${description}. Apply now on HireBangla.`,
+      url: `${SITE_URL}/jobs/${slug}`,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary',
+      title: `${job.title} - ${job.companyName || 'HireBangla'}`,
+      description: `${job.title} ${description}`,
+    },
   };
+}
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/jobs"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Jobs
-      </Link>
-
-      <div className="flex gap-8">
-        {/* Main Content */}
-        <div className="flex-1">
-          <Card>
-            <CardContent className="p-6 sm:p-8">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                    {job.title}
-                  </h1>
-                  <div className="mt-2 flex items-center gap-2 text-gray-600">
-                    <Building2 className="h-5 w-5" />
-                    <span className="text-lg">{job.companyName}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {isAuthenticated && (
-                    <button
-                      className={`rounded-lg border p-2 transition-colors ${
-                        isSaved
-                          ? 'border-blue-300 bg-blue-50 text-blue-600'
-                          : 'border-gray-300 text-gray-500 hover:bg-gray-50'
-                      }`}
-                      onClick={() => {
-                        if (isSaved) {
-                          unsaveMutation.mutate(job._id);
-                        } else {
-                          saveMutation.mutate(job._id);
-                        }
-                      }}
-                    >
-                      {isSaved ? (
-                        <BookmarkCheck className="h-5 w-5" />
-                      ) : (
-                        <Bookmark className="h-5 w-5" />
-                      )}
-                    </button>
-                  )}
-                  <button
-                    className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50"
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast.success('Link copied!');
-                    }}
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Badges */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Badge variant="default">
-                  {jobTypeLabels[job.jobType] || job.jobType}
-                </Badge>
-                {job.experienceLevel && (
-                  <Badge variant="secondary" className="capitalize">
-                    {job.experienceLevel} Level
-                  </Badge>
-                )}
-                {job.isFeatured && <Badge variant="warning">Featured</Badge>}
-                {job.source && job.source !== 'original' && (
-                  <Badge variant="secondary">
-                    <ExternalLink className="mr-1 h-3 w-3" />
-                    via {job.source}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Match Score */}
-              {matchData?.score !== undefined && (
-                <div className="mt-4 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-                  <div className={`text-2xl font-bold ${
-                    matchData.score >= 70
-                      ? 'text-green-600'
-                      : matchData.score >= 40
-                        ? 'text-yellow-600'
-                        : 'text-gray-500'
-                  }`}>
-                    {matchData.score}%
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">Match Score</p>
-                    <p className="text-xs text-blue-700">
-                      Based on your skills, experience, and preferences
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Info Grid */}
-              <div className="mt-6 grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-4">
-                {locationText && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-gray-400" />
-                    <span>
-                      {locationText}
-                      {job.location?.isRemote && ' (Remote)'}
-                    </span>
-                  </div>
-                )}
-                {formatSalary() && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Banknote className="h-4 w-4 text-gray-400" />
-                    <span>{formatSalary()}/{job.salary?.period || 'month'}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span>
-                    Posted{' '}
-                    {job.publishedAt
-                      ? formatDistanceToNow(new Date(job.publishedAt), {
-                          addSuffix: true,
-                        })
-                      : 'recently'}
-                  </span>
-                </div>
-                {job.deadline && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span>
-                      Deadline: {new Date(job.deadline).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Job Description
-                </h2>
-                <div
-                  className="prose mt-3 max-w-none text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: job.description }}
-                />
-              </div>
-
-              {/* Responsibilities */}
-              {job.responsibilities?.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Responsibilities
-                  </h2>
-                  <ul className="mt-3 list-inside list-disc space-y-1.5 text-gray-600">
-                    {job.responsibilities.map((item: string, i: number) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Requirements */}
-              {job.requirements?.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Requirements
-                  </h2>
-                  <ul className="mt-3 list-inside list-disc space-y-1.5 text-gray-600">
-                    {job.requirements.map((item: string, i: number) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Education */}
-              {job.education && (job.education.degree || job.education.field) && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Education
-                  </h2>
-                  <div className="mt-3 flex items-center gap-2 text-gray-600">
-                    <GraduationCap className="h-5 w-5" />
-                    <span>
-                      {[job.education.degree, job.education.field]
-                        .filter(Boolean)
-                        .join(' in ')}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Skills */}
-              {job.skillNames?.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Skills
-                  </h2>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {job.skillNames.map((skill: string) => (
-                      <span
-                        key={skill}
-                        className="rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Benefits */}
-              {job.benefits?.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Benefits
-                  </h2>
-                  <ul className="mt-3 list-inside list-disc space-y-1.5 text-gray-600">
-                    {job.benefits.map((item: string, i: number) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Apply Button */}
-              <div className="mt-10 border-t border-gray-200 pt-6">
-                {job.applicationMethod === 'external' && job.applicationUrl ? (
-                  <a
-                    href={job.applicationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button size="lg">
-                      Apply on {job.source || 'External Site'}
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  </a>
-                ) : isAuthenticated && user?.role === 'jobseeker' ? (
-                  <Button
-                    size="lg"
-                    onClick={() => setShowApplyModal(true)}
-                  >
-                    <Briefcase className="h-5 w-5" />
-                    Apply Now
-                  </Button>
-                ) : isAuthenticated ? (
-                  <p className="text-sm text-gray-500">
-                    Switch to a jobseeker account to apply.
-                  </p>
-                ) : (
-                  <Link href="/login">
-                    <Button size="lg">Login to Apply</Button>
-                  </Link>
-                )}
-              </div>
-
-              {/* Apply Modal */}
-              {showApplyModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                  <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-gray-900">
-                        Apply to {job.title}
-                      </h2>
-                      <button
-                        onClick={() => setShowApplyModal(false)}
-                        className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                      at {job.companyName}
-                    </p>
-
-                    <div className="mt-4">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Cover Letter (optional)
-                      </label>
-                      <textarea
-                        value={coverLetter}
-                        onChange={(e) => setCoverLetter(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:outline-none"
-                        rows={6}
-                        placeholder="Why are you a good fit for this role?"
-                        maxLength={5000}
-                      />
-                      <p className="mt-1 text-xs text-gray-400">
-                        {coverLetter.length}/5000
-                      </p>
-                    </div>
-
-                    <div className="mt-6 flex justify-end gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowApplyModal(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          applyMutation.mutate(
-                            {
-                              jobId: job._id,
-                              coverLetter: coverLetter || undefined,
-                            },
-                            {
-                              onSuccess: () => setShowApplyModal(false),
-                            },
-                          );
-                        }}
-                        isLoading={applyMutation.isPending}
-                      >
-                        Submit Application
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar - Similar Jobs */}
-        <aside className="hidden w-80 flex-shrink-0 lg:block">
-          {similarJobs && similarJobs.length > 0 && (
-            <div className="sticky top-24">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                Similar Jobs
-              </h2>
-              <div className="space-y-3">
-                {similarJobs.map((sj: any) => (
-                  <JobCard key={sj._id || sj.slug} job={sj} />
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
-      </div>
-    </div>
-  );
+export default function JobDetailPage() {
+  return <JobDetailContent />;
 }

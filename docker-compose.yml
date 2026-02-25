@@ -17,6 +17,38 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: job_platform_api
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - redis
+    env_file:
+      - apps/api/.env
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/job_platform
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    container_name: job_platform_web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   mongo_data:
   redis_data:

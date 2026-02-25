@@ -243,5 +243,8 @@ jobSchema.index({ status: 1, publishedAt: -1 });
 jobSchema.index({ status: 1, category: 1, publishedAt: -1 });
 jobSchema.index({ status: 1, 'location.division': 1, publishedAt: -1 });
 jobSchema.index({ source: 1, sourceJobId: 1 }, { unique: true, sparse: true });
+jobSchema.index({ postedBy: 1, status: 1, createdAt: -1 });
+jobSchema.index({ isApproved: 1, status: 1, publishedAt: -1 });
+jobSchema.index({ 'location.isRemote': 1, status: 1, publishedAt: -1 });
 
 export const Job = mongoose.model<IJobDocument>('Job', jobSchema);

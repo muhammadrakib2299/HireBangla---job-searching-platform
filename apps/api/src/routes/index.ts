@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { apiLimiter, authLimiter } from '../middleware/rateLimiter.middleware.js';
 import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
 import jobRoutes from './job.routes.js';
@@ -12,6 +13,9 @@ import adminRoutes from './admin.routes.js';
 
 const router = Router();
 
+// Apply general rate limiter to all routes
+router.use(apiLimiter);
+
 // Health check
 router.get('/health', (_req, res) => {
   res.json({
@@ -21,8 +25,8 @@ router.get('/health', (_req, res) => {
   });
 });
 
-// Phase 1: Auth + Users
-router.use('/auth', authRoutes);
+// Phase 1: Auth + Users (stricter rate limit on auth)
+router.use('/auth', authLimiter, authRoutes);
 router.use('/users', userRoutes);
 
 // Phase 2: Jobs + Companies + Uploads
