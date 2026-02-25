@@ -14,7 +14,7 @@ export default function JobsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Read filters from URL
-  const params = {
+  const params: Record<string, any> = {
     q: searchParams.get('q') || undefined,
     division: searchParams.get('division') || undefined,
     category: searchParams.get('category') || undefined,
@@ -54,7 +54,7 @@ export default function JobsPage() {
     updateParams({ q: query || undefined, division: division || undefined });
   };
 
-  const handleFilterChange = (filters: Record<string, unknown>) => {
+  const handleFilterChange = (filters: any) => {
     updateParams(filters);
   };
 
